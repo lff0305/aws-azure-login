@@ -384,7 +384,8 @@ export const login = {
     enableChromeNetworkService: boolean,
     awsNoVerifySsl: boolean,
     enableChromeSeamlessSso: boolean,
-    noDisableExtensions: boolean
+    noDisableExtensions: boolean,
+    roleMap: string
   ): Promise<void> {
     let headless, cliProxy;
     if (mode === "cli") {
@@ -434,7 +435,8 @@ export const login = {
       roles,
       noPrompt,
       profile.azure_default_role_arn,
-      profile.azure_default_duration_hours
+      profile.azure_default_duration_hours,
+      roleMap
     );
     await this._assumeRoleAsync(
       profileName,
@@ -454,7 +456,8 @@ export const login = {
     awsNoVerifySsl: boolean,
     enableChromeSeamlessSso: boolean,
     forceRefresh: boolean,
-    noDisableExtensions: boolean
+    noDisableExtensions: boolean,
+    roleMap: string
   ): Promise<void> {
     const profiles = await awsConfig.getAllProfileNames();
 
@@ -481,7 +484,8 @@ export const login = {
         enableChromeNetworkService,
         awsNoVerifySsl,
         enableChromeSeamlessSso,
-        noDisableExtensions
+        noDisableExtensions,
+        roleMap
       );
     }
   },
@@ -844,7 +848,8 @@ export const login = {
     roles: Role[],
     noPrompt: boolean,
     defaultRoleArn: string,
-    defaultDurationHours: string
+    defaultDurationHours: string,
+    roleMap: string
   ): Promise<{
     role: Role;
     durationHours: number;
@@ -866,11 +871,38 @@ export const login = {
         debug("Valid role found. No need to ask.");
       } else {
         debug("Asking user to choose role");
+
+        console.log(roles);
+        console.log("RoleMap", roleMap)
+
+        let choices = []
+        if (roleMap == "") {
+          choices = _.sortBy(_.map(roles, "roleArn"))
+        } else {
+          let mapR = new Map<string, string>()
+          let roleList = roleMap.split(",")
+          for (let i in roleList) {
+             let kv = roleList[i].split("=");
+             if (kv[0] != "" && kv[1] != "") {
+                mapR.set(kv[0], kv[1])
+             }
+          }
+        console.log(">>", mapR)
+          for (let i in roles) {
+            role = roles[i]
+            choices.push({
+              name: mapR.get(role.roleArn) == null ? role.roleArn :
+                mapR.get(role.roleArn) + " [" + role.roleArn +"]",
+              value: role.roleArn
+            })
+          }
+        }
         questions.push({
           name: "role",
           message: "Role:",
           type: "list",
-          choices: _.sortBy(_.map(roles, "roleArn")),
+         // choices: _.sortBy(_.map(roles, "roleArn")),
+          choices: choices,
           default: defaultRoleArn,
         });
       }

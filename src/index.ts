@@ -49,6 +49,10 @@ program
     "--no-disable-extensions",
     "Tell Puppeteer not to pass the --disable-extensions flag to Chromium"
   )
+  .option(
+    "--rolemap <rolemap>",
+     "Role map from arn -> role name"
+  )
   .parse(process.argv);
 
 const profileName =
@@ -63,6 +67,8 @@ const awsNoVerifySsl = !program.verifySsl;
 const enableChromeSeamlessSso = !!program.enableChromeSeamlessSso;
 const forceRefresh = !!program.forceRefresh;
 const noDisableExtensions = !program.disableExtensions;
+const roleMap = process.env.AWS_ROLE_MAP ? process.env.AWS_ROLE_MAP : ((program.rolemap as string | undefined) || "");
+
 
 Promise.resolve()
   .then(() => {
@@ -75,7 +81,8 @@ Promise.resolve()
         awsNoVerifySsl,
         enableChromeSeamlessSso,
         forceRefresh,
-        noDisableExtensions
+        noDisableExtensions,
+        roleMap
       );
     }
 
@@ -88,7 +95,8 @@ Promise.resolve()
       enableChromeNetworkService,
       awsNoVerifySsl,
       enableChromeSeamlessSso,
-      noDisableExtensions
+      noDisableExtensions,
+      roleMap
     );
   })
   .catch((err: Error) => {
