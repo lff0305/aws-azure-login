@@ -897,6 +897,7 @@ export const login = {
             })
           }
         }
+        role = null
         questions.push({
           name: "role",
           message: "Role:",
